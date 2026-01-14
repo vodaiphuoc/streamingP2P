@@ -31,8 +31,7 @@ def main():
     # Load the arrow dataset
     dataset = load_dataset(
         args.input_dir,
-        token = args.token,
-        streaming = True
+        token = args.token
     )
     
     # We open the 4 Kaldi-style files
