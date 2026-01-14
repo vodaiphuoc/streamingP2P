@@ -2,7 +2,7 @@ import argparse
 import os
 import soundfile as sf
 import io
-from datasets import load_dataset, Audio
+from datasets import load_dataset
 
 SAMPLING_RATE=24000
 
@@ -25,7 +25,7 @@ def main():
         required=True
     )
     args = parser.parse_args()
-    print(args.input_dir)
+    print(args.input_dir, args.des_dir)
 
     os.makedirs(args.des_dir, exist_ok=True)
     wav_dir = os.path.join(args.des_dir, "wavs")
