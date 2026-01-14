@@ -1,7 +1,7 @@
 import argparse
 import os
 import soundfile as sf
-from datasets import load_from_disk
+from datasets import load_dataset
 
 def main():
     parser = argparse.ArgumentParser()
@@ -16,6 +16,11 @@ def main():
         type=str, 
         required=True
     )
+    parser.add_argument(
+        '--token', 
+        type=str, 
+        required=True
+    )
     args = parser.parse_args()
     print(args.input_dir)
 
@@ -24,7 +29,11 @@ def main():
     os.makedirs(wav_dir, exist_ok=True)
 
     # Load the arrow dataset
-    dataset = load_from_disk(args.input_dir)
+    dataset = load_dataset(
+        args.input_dir,
+        token = args.token,
+        streaming = True
+    )
     
     # We open the 4 Kaldi-style files
     with open(f"{args.des_dir}/wav.scp", 'w') as f_wav, \

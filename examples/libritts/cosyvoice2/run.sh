@@ -1,22 +1,24 @@
 #!/bin/bash
 . ./path.sh || exit 1;
 
-OPTS=$(getopt -o "" --long hf_data_dir: -- "$@")
+OPTS=$(getopt -o "" --long hf_repo:, token: -- "$@")
 eval set -- "$OPTS"
 
 stage=0 # Start from 0 since you already have your data
 stop_stage=3
 
 # EDIT THESE PATHS
-hf_data_dir=$2
+hf_repo=$2
+token=$4
 pretrained_model_dir="../../../pretrained_models/CosyVoice2-0.5B"
 
 # Stage 0: Preparation
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
   echo "Data preparation for Vietnamese HF Dataset"
   python local/prepare_hf_data.py \
-  --input_dir $hf_data_dir \
-  --des_dir "data/train"
+  --input_dir $hf_repo \
+  --des_dir "data/train" \
+  --token $token
 fi
 
 # Stage 1: Speaker Embedding
@@ -59,7 +61,6 @@ train_engine=torch_ddp
 
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   cp data/train/parquet/data.list data/train.data.list
-  cp data/dev/parquet/data.list data/dev.data.list
   
   for model in llm flow hifigan; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
