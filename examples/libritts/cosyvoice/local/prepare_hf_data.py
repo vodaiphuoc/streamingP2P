@@ -43,7 +43,7 @@ def main():
         dataset = load_dataset(
             args.input_dir,
             token = args.token,
-            data_files={"train": "data-000[40-41]-of-00049.arrow"},
+            data_files={"train": "data-0001[3-5]-of-00049.arrow"},
             streaming=True
         )
     
