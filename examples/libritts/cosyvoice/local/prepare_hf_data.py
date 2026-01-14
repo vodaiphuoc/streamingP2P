@@ -34,7 +34,7 @@ def main():
     dataset = load_dataset(
         args.input_dir,
         token = args.token,
-        data_files={"train": "data-0000[0-3]-of-00049.arrow"},
+        data_files={"train": "data-0000[0-1]-of-00049.arrow"},
     )
     dataset = dataset.cast_column("audio", Audio(sampling_rate=SAMPLING_RATE))
     
