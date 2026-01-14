@@ -43,7 +43,7 @@ def main():
         
         spk_map = {}
 
-        for item in dataset:
+        for item in dataset['train']:
             utt_id = item['_id']
             speaker = item['speaker']
             text = item['text']
