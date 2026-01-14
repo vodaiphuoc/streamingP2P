@@ -43,10 +43,9 @@ def main():
         dataset = load_dataset(
             args.input_dir,
             token = args.token,
-            data_files={"train": "data-000[47-48]-of-00049.arrow"},
+            data_files={"train": "data-000[40-41]-of-00049.arrow"},
             streaming=True
         )
-    # dataset = dataset.cast_column("audio", Audio(sampling_rate=SAMPLING_RATE))
     
     # We open the 4 Kaldi-style files
     with open(f"{args.des_dir}/wav.scp", 'w') as f_wav, \
