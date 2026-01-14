@@ -35,6 +35,7 @@ def main():
         args.input_dir,
         token = args.token,
         data_files={"train": "data-0000[0-1]-of-00049.arrow"},
+        streaming=True
     )
     dataset = dataset.cast_column("audio", Audio(sampling_rate=SAMPLING_RATE))
     
@@ -54,6 +55,7 @@ def main():
             # Extract audio data
             # item['audio']['array'] is a numpy array
             audio_array = item['audio']['array']
+            print(audio_array.shape)
             
             # Save raw audio to a physical .wav file (required for CosyVoice stages)
             wav_path = os.path.abspath(os.path.join(wav_dir, f"{utt_id}.wav"))
