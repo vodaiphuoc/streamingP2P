@@ -1,7 +1,9 @@
 import argparse
 import os
 import soundfile as sf
-from datasets import load_dataset
+from datasets import load_dataset, Audio
+
+SAMPLING_RATE=24000
 
 def main():
     parser = argparse.ArgumentParser()
@@ -31,8 +33,10 @@ def main():
     # Load the arrow dataset
     dataset = load_dataset(
         args.input_dir,
-        token = args.token
+        token = args.token,
+        data_files={"train": "data-0000[0-3]-of-00049.arrow"},
     )
+    dataset = dataset.cast_column("audio", Audio(sampling_rate=SAMPLING_RATE))
     
     # We open the 4 Kaldi-style files
     with open(f"{args.des_dir}/wav.scp", 'w') as f_wav, \
@@ -50,11 +54,10 @@ def main():
             # Extract audio data
             # item['audio']['array'] is a numpy array
             audio_array = item['audio']['array']
-            sampling_rate = item['audio']['sampling_rate']
             
             # Save raw audio to a physical .wav file (required for CosyVoice stages)
             wav_path = os.path.abspath(os.path.join(wav_dir, f"{utt_id}.wav"))
-            sf.write(wav_path, audio_array, sampling_rate)
+            sf.write(wav_path, audio_array, SAMPLING_RATE)
 
             # Write Kaldi-style records
             f_wav.write(f"{utt_id} {wav_path}\n")
