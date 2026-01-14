@@ -32,12 +32,20 @@ def main():
     os.makedirs(wav_dir, exist_ok=True)
 
     # Load the arrow dataset
-    dataset = load_dataset(
-        args.input_dir,
-        token = args.token,
-        data_files={"train": "data-0000[0-1]-of-00049.arrow"},
-        streaming=True
-    )
+    if "train" in args.des_dir:
+        dataset = load_dataset(
+            args.input_dir,
+            token = args.token,
+            data_files={"train": "data-0000[0-1]-of-00049.arrow"},
+            streaming=True
+        )
+    else:
+        dataset = load_dataset(
+            args.input_dir,
+            token = args.token,
+            data_files={"train": "data-000[47-48]-of-00049.arrow"},
+            streaming=True
+        )
     # dataset = dataset.cast_column("audio", Audio(sampling_rate=SAMPLING_RATE))
     
     # We open the 4 Kaldi-style files

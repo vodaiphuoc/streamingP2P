@@ -16,16 +16,20 @@ pretrained_model_dir="../../../pretrained_models/CosyVoice2-0.5B"
 # Stage 0: Preparation
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
   echo "Data preparation for Vietnamese HF Dataset"
-  python local/prepare_hf_data.py \
-  --input_dir $hf_repo \
-  --des_dir "data/train" \
-  --token $token
+
+  for x in train dev; do
+    python local/prepare_hf_data.py \
+        --input_dir $hf_repo \
+        --des_dir data/$x \
+        --token $token
+  done
+  
 fi
 
 # Stage 1: Speaker Embedding
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Extracting CAM++ embeddings"
-  for x in train; do
+  for x in train dev; do
     python tools/extract_embedding.py --dir data/$x \
       --onnx_path $pretrained_model_dir/campplus.onnx
   done
@@ -34,7 +38,7 @@ fi
 # Stage 2: Speech Tokens
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Extracting speech tokens"
-  for x in train; do
+  for x in train dev; do
     python tools/extract_speech_token.py --dir data/$x \
       --onnx_path $pretrained_model_dir/speech_tokenizer_v2.onnx
   done
@@ -43,7 +47,7 @@ fi
 # Stage 3: Parquet Data
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   echo "Making Parquet files"
-  for x in train; do
+  for x in train dev; do
     mkdir -p data/$x/parquet
     python tools/make_parquet_list.py --num_utts_per_parquet 1000 \
       --num_processes 10 --src_dir data/$x --des_dir data/$x/parquet
@@ -62,6 +66,7 @@ train_engine=torch_ddp
 
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   cp data/train/parquet/data.list data/train.data.list
+  cp data/dev/parquet/data.list data/dev.data.list
   
   for model in llm flow hifigan; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
