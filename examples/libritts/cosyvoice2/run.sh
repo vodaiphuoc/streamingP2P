@@ -5,7 +5,7 @@ OPTS=$(getopt -o "" --long hf_repo:,token: -- "$@")
 eval set -- "$OPTS"
 
 stage=0 # Start from 0 since you already have your data
-stop_stage=3
+stop_stage=8
 
 # EDIT THESE PATHS
 hf_repo=$2
