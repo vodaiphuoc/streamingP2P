@@ -52,5 +52,6 @@ pretrained_models/*
 *.tar
 
 test*.py
+test*.sh
 myenv/
 dev.note.md
