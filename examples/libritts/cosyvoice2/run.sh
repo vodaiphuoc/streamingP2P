@@ -1,7 +1,7 @@
 #!/bin/bash
 . ./path.sh || exit 1;
 
-OPTS=$(getopt -o "" --long hf_repo:, token: -- "$@")
+OPTS=$(getopt -o "" --long hf_repo:,token: -- "$@")
 eval set -- "$OPTS"
 
 stage=0 # Start from 0 since you already have your data
@@ -11,6 +11,7 @@ stop_stage=3
 hf_repo=$2
 token=$4
 pretrained_model_dir="../../../pretrained_models/CosyVoice2-0.5B"
+
 
 # Stage 0: Preparation
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
