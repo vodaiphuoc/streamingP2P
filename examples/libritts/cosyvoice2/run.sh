@@ -18,7 +18,6 @@ if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
   echo "Data preparation for Vietnamese HF Dataset"
 
   for x in train dev; do
-    echo data/$x
     python local/prepare_hf_data.py \
         --input_dir $hf_repo \
         --des_dir data/$x \
