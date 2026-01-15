@@ -21,7 +21,7 @@ def apply_lora_to_llm(
             "o_proj",
         ],
     )
-
+    print('lora_config: ',lora_config)
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
     return model

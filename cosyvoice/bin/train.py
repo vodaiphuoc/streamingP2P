@@ -146,7 +146,7 @@ def main():
                     model,
                     r=configs['lora_conf']['lora_r'],
                     lora_alpha=configs['lora_conf']['lora_alpha'],
-                    lora_dropout=configs['lora_conf']['lora_r']
+                    lora_dropout=configs['lora_conf']['lora_dropout']
                 )
 
                 for name, param in model.named_parameters():
