@@ -34,7 +34,19 @@ class Executor:
         self.rank = int(os.environ.get('RANK', 0))
         self.device = torch.device('cuda:{}'.format(self.rank))
 
-    def train_one_epoc(self, model, optimizer, scheduler, train_data_loader, cv_data_loader, writer, info_dict, scaler, group_join, ref_model=None):
+    def train_one_epoc(
+            self, 
+            model, 
+            optimizer, 
+            scheduler, 
+            train_data_loader, 
+            cv_data_loader, 
+            writer, 
+            info_dict, 
+            scaler, 
+            group_join: dist.ProcessGroup, 
+            ref_model=None
+        ):
         ''' Train one epoch
         '''
 

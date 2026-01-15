@@ -214,7 +214,7 @@ def save_model(model, model_name, info_dict):
         logging.info('[Rank {}] Checkpoint: save to checkpoint {}'.format(rank, save_model_path))
 
 
-def cosyvoice_join(group_join, info_dict):
+def cosyvoice_join(group_join: dist.ProcessGroup, info_dict):
     world_size = int(os.environ.get('WORLD_SIZE', 1))
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
     rank = int(os.environ.get('RANK', 0))
@@ -222,8 +222,11 @@ def cosyvoice_join(group_join, info_dict):
     if info_dict["batch_idx"] != 0:
         # we try to join all rank in both ddp and deepspeed mode, in case different rank has different lr
         try:
-            dist.monitored_barrier(group=group_join,
-                                   timeout=group_join.options._timeout)
+            timeout = group_join._get_backend(torch.device("cuda")).options._timeout
+            dist.monitored_barrier(
+                group=group_join,
+                timeout=timeout
+            )
             return False
         except RuntimeError as e:
             logging.info("Detected uneven workload distribution: {}\n".format(e) +

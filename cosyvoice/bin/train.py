@@ -182,7 +182,11 @@ def main():
         executor.epoch = epoch
         train_dataset.set_epoch(epoch)
         dist.barrier()
-        group_join = dist.new_group(backend="gloo", timeout=datetime.timedelta(seconds=args.timeout))
+        group_join: dist.ProcessGroup = dist.new_group(
+            backend="gloo", 
+            timeout=datetime.timedelta(seconds=args.timeout)
+        )
+        
         if gan is True:
             executor.train_one_epoc_gan(model, optimizer, scheduler, optimizer_d, scheduler_d, train_data_loader, cv_data_loader,
                                         writer, info_dict, scaler, group_join)
