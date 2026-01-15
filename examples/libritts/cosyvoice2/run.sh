@@ -76,7 +76,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         --rdzv_id=$job_id --rdzv_backend="c10d" --rdzv_endpoint="localhost:1234" \
       cosyvoice/bin/train.py \
       --train_engine $train_engine \
-      --config conf/cosyvoice2.yaml \
+      --config ./conf/cosyvoice2.yaml \
       --train_data data/train.data.list \
       --cv_data data/dev.data.list \
       --qwen_pretrain_path $pretrained_model_dir/CosyVoice-BlankEN \

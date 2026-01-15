@@ -34,14 +34,14 @@ def main():
         dataset = load_dataset(
             args.input_dir,
             token = args.token,
-            data_files={"train": "data-0000[0-1]-of-00049.arrow"},
+            data_files={"train": "data-0000[0-10]-of-00049.arrow"},
             streaming=True
         )
     else:
         dataset = load_dataset(
             args.input_dir,
             token = args.token,
-            data_files={"train": "data-0001[3-4]-of-00049.arrow"},
+            data_files={"train": "data-0004[7-8]-of-00049.arrow"},
             streaming=True
         )
     

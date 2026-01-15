@@ -40,7 +40,7 @@ from cosyvoice.utils.train_utils import (
 def get_args():
     parser = argparse.ArgumentParser(description='training your network')
     parser.add_argument('--train_engine',
-                        default='torch_ddp',
+                        default='deepspeed',
                         choices=['torch_ddp', 'deepspeed'],
                         help='Engine for paralleled training')
     parser.add_argument('--model', required=True, help='model which will be trained')
@@ -175,7 +175,8 @@ def main():
 
     # Init scaler, used for pytorch amp mixed precision training
     scaler = torch.amp.GradScaler("cuda") if args.use_amp else None
-    print('start step {} start epoch {}'.format(start_step, start_epoch))
+
+    print(f"start training for {args.model}")
 
     # Start training loop
     for epoch in range(start_epoch + 1, info_dict['max_epoch']):
@@ -183,7 +184,7 @@ def main():
         train_dataset.set_epoch(epoch)
         dist.barrier()
         group_join: dist.ProcessGroup = dist.new_group(
-            backend="gloo", 
+            backend="gloo",
             timeout=datetime.timedelta(seconds=args.timeout)
         )
         
