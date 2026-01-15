@@ -36,14 +36,14 @@ def main():
             args.input_dir,
             token = args.token,
             data_files={"train": "data-0000[0-10]-of-00049.arrow"},
-            streaming=True
+            # streaming=True
         )
     else:
         dataset = load_dataset(
             args.input_dir,
             token = args.token,
             data_files={"train": "data-0004[7-8]-of-00049.arrow"},
-            streaming=True
+            # streaming=True
         )
     
     # We open the 4 Kaldi-style files
@@ -54,7 +54,11 @@ def main():
         
         spk_map = {}
 
-        for item in tqdm(dataset['train']):
+        for item in tqdm(
+                dataset['train'], 
+                total=len(dataset['train']), 
+                desc=f"prepare data for {args.des_dir}"
+            ):
             utt_id = item['_id']
             speaker = item['speaker']
             text = item['text']

@@ -49,7 +49,6 @@ class Executor:
         ):
         ''' Train one epoch
         '''
-        print('info_dict: ',info_dict)
         lr = optimizer.param_groups[0]['lr']
         logging.info('Epoch {} TRAIN info lr {} rank {}'.format(self.epoch, lr, self.rank))
         logging.info('using accumulate grad, new batch size is {} times'
