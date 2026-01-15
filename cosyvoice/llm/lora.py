@@ -21,14 +21,14 @@ def apply_lora_to_llm(
             "o_proj",
         ],
     )
-    
-    model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
-
     if not hasattr(model, "prepare_inputs_for_generation"):
         def _prepare_inputs_for_generation(*args, **kwargs):
             raise RuntimeError(
                 "prepare_inputs_for_generation should NOT be called in CosyVoice2"
             )
         model.prepare_inputs_for_generation = _prepare_inputs_for_generation
+    
+    model = get_peft_model(model, lora_config)
+    model.print_trainable_parameters()
+
     return model
