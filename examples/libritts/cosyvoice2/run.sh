@@ -39,8 +39,10 @@ fi
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Extracting speech tokens"
   for x in train dev; do
-    python tools/extract_speech_token.py --dir data/$x \
-      --onnx_path $pretrained_model_dir/speech_tokenizer_v2.onnx
+    python tools/extract_speech_token.py \
+        --dir data/$x \
+        --onnx_path $pretrained_model_dir/speech_tokenizer_v2.onnx \
+        --num_thread 2
   done
 fi
 

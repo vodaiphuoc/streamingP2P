@@ -24,7 +24,7 @@ from tqdm import tqdm
 def single_job(utt):
     audio, sample_rate = torchaudio.load(utt2wav[utt])
     if sample_rate != 16000:
-        audio = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)(audio)
+        audio = torchaudio.functional.resample(audio, orig_freq=sample_rate, new_freq=16000)
     feat = kaldi.fbank(audio,
                        num_mel_bins=80,
                        dither=0,

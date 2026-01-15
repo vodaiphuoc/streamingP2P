@@ -16,7 +16,7 @@
 import logging
 from contextlib import nullcontext
 import os
-
+from tqdm import tqdm
 import torch
 import torch.distributed as dist
 
@@ -62,7 +62,10 @@ class Executor:
             self.ref_model.eval()
         model_context = model.join if info_dict['train_engine'] == 'torch_ddp' else nullcontext
         with model_context():
-            for batch_idx, batch_dict in enumerate(train_data_loader):
+            for batch_idx, batch_dict in tqdm(
+                enumerate(train_data_loader),
+                total=len(train_data_loader)
+            ):
                 info_dict["tag"] = "TRAIN"
                 info_dict["step"] = self.step
                 info_dict["epoch"] = self.epoch
@@ -117,7 +120,10 @@ class Executor:
         model.train()
         model_context = model.join if info_dict['train_engine'] == 'torch_ddp' else nullcontext
         with model_context():
-            for batch_idx, batch_dict in enumerate(train_data_loader):
+            for batch_idx, batch_dict in tqdm(
+                    enumerate(train_data_loader),
+                    total=len(train_data_loader)
+            ):
                 info_dict["tag"] = "TRAIN"
                 info_dict["step"] = self.step
                 info_dict["epoch"] = self.epoch
