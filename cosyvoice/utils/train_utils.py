@@ -97,7 +97,7 @@ def wrap_cuda_model(args, model):
     if args.train_engine == "torch_ddp":  # native pytorch ddp
         assert (torch.cuda.is_available())
         model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
+        model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=False)
     else:
         if int(os.environ.get('RANK', 0)) == 0:
             logging.info("Estimating model states memory needs (zero2)...")

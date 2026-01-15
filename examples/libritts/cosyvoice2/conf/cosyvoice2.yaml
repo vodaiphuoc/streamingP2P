@@ -207,7 +207,7 @@ data_pipeline_gan: [
 train_conf:
     optim: adam
     optim_conf:
-        lr: 1e-4 # change to 1e-5 during sft
+        lr: 1e-5 # change to 1e-5 during sft
     scheduler: constantlr # change to constantlr during sft
     scheduler_conf:
         warmup_steps: 2500
@@ -232,3 +232,10 @@ train_conf_gan:
     accum_grad: 1 # in gan training, accum_grad must be 1
     log_interval: 100
     save_per_step: -1
+
+# lora conf
+lora_conf:
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  warmup_steps: 500

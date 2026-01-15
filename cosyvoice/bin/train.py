@@ -36,6 +36,7 @@ from cosyvoice.utils.train_utils import (
     init_summarywriter, save_model,
     wrap_cuda_model, check_modify_and_save_config)
 
+from cosyvoice.llm.lora import apply_lora_to_llm
 
 def get_args():
     parser = argparse.ArgumentParser(description='training your network')
@@ -113,7 +114,7 @@ def main():
     if gan is True:
         configs['train_conf'] = configs['train_conf_gan']
     configs['train_conf'].update(vars(args))
-    print('configs: ',configs)
+    
     # Init env for ddp
     init_distributed(args)
 
@@ -131,12 +132,28 @@ def main():
     if args.dpo is True:
         configs[args.model].forward = configs[args.model].forward_dpo
     model = configs[args.model]
-    print(model, type(model))
+
     start_step, start_epoch = 0, -1
     if args.checkpoint is not None:
         if os.path.exists(args.checkpoint):
             state_dict = torch.load(args.checkpoint, map_location='cpu')
             model.load_state_dict(state_dict, strict=False)
+
+            # apply lora after load pretrain checkpoint
+            if args.model == 'llm' and configs.get("lora_conf") is not None:
+                print("apply lora")
+                model = apply_lora_to_llm(
+                    model,
+                    r=configs['lora_conf']['lora_r'],
+                    lora_alpha=configs['lora_conf']['lora_alpha'],
+                    lora_dropout=configs['lora_conf']['lora_r']
+                )
+
+                for name, param in model.named_parameters():
+                    if "lora_" not in name:
+                        param.requires_grad = False
+
+
             if 'step' in state_dict:
                 start_step = state_dict['step']
             if 'epoch' in state_dict:
