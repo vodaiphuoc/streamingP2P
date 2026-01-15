@@ -122,7 +122,7 @@ class DataList(IterableDataset):
             yield data
 
 
-def Dataset(data_list_file,
+def get_dataset(data_list_file,
             data_pipeline,
             mode='train',
             gan=False,
