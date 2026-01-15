@@ -59,6 +59,7 @@ fi
 # Stage 5: Training
 # (Update the 'cat' commands to point to your new folders)
 export CUDA_VISIBLE_DEVICES="0,1"
+export OMP_NUM_THREADS=2
 num_gpus=$(echo $CUDA_VISIBLE_DEVICES | awk -F "," '{print NF}')
 job_id=1986
 dist_backend="nccl"
