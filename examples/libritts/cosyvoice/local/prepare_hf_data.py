@@ -3,6 +3,7 @@ import os
 import soundfile as sf
 import io
 from datasets import load_dataset
+from tqdm import tqdm
 
 SAMPLING_RATE=24000
 
@@ -53,7 +54,7 @@ def main():
         
         spk_map = {}
 
-        for item in dataset['train']:
+        for item in tqdm(dataset['train']):
             utt_id = item['_id']
             speaker = item['speaker']
             text = item['text']
