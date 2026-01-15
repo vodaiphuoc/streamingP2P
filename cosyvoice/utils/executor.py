@@ -49,7 +49,7 @@ class Executor:
         ):
         ''' Train one epoch
         '''
-
+        print('info_dict: ',info_dict)
         lr = optimizer.param_groups[0]['lr']
         logging.info('Epoch {} TRAIN info lr {} rank {}'.format(self.epoch, lr, self.rank))
         logging.info('using accumulate grad, new batch size is {} times'
@@ -87,13 +87,18 @@ class Executor:
                 info_dict = update_parameter_and_lr(model, optimizer, scheduler, scaler, info_dict)
                 log_per_step(writer, info_dict)
                 # NOTE specify save_per_step in cosyvoice.yaml if you want to enable step save
-                if info_dict['save_per_step'] > 0 and (self.step + 1) % info_dict['save_per_step'] == 0 and \
-                   (batch_idx + 1) % info_dict["accum_grad"] == 0:
+                if info_dict['save_per_step'] > 0 and \
+                    (self.step + 1) % info_dict['save_per_step'] == 0 and \
+                    (batch_idx + 1) % info_dict["accum_grad"] == 0:
+                    
                     dist.barrier()
+                    print('run self.cv')
                     self.cv(model, cv_data_loader, writer, info_dict, on_batch_end=False)
                     model.train()
+                
                 if (batch_idx + 1) % info_dict["accum_grad"] == 0:
                     self.step += 1
+
         dist.barrier()
         self.cv(model, cv_data_loader, writer, info_dict, on_batch_end=True)
 
