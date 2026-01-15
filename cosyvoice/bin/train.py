@@ -113,7 +113,7 @@ def main():
     if gan is True:
         configs['train_conf'] = configs['train_conf_gan']
     configs['train_conf'].update(vars(args))
-
+    print('configs: ',configs)
     # Init env for ddp
     init_distributed(args)
 
@@ -131,6 +131,7 @@ def main():
     if args.dpo is True:
         configs[args.model].forward = configs[args.model].forward_dpo
     model = configs[args.model]
+    print(model, type(model))
     start_step, start_epoch = 0, -1
     if args.checkpoint is not None:
         if os.path.exists(args.checkpoint):
