@@ -259,10 +259,12 @@ class Qwen2Encoder(torch.nn.Module):
         new_cache = outs.past_key_values
         return xs, new_cache
 
-    def get_inner_embed_tokens(self):
+    def get_inner_embed_tokens(self)->torch.nn.Embedding:
         if isinstance(self.model, PeftModel):
-            print(type(self.model.base_model))
-            print(type(self.model.base_model.model))
+            print("self.model: ",type(self.model))
+            print("base_model: ",type(self.model.base_model))
+            print("model in base_model: ",type(self.model.base_model.model))
+            print("embed_token in model.model in base_model: ",type(self.model.base_model.model.model.embed_tokens))
             return self.model.base_model.model.embed_tokens
         else:
             return self.model.model.embed_tokens
