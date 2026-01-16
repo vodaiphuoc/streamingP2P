@@ -199,7 +199,7 @@ def _mp_fn(index, args):
 
 def main():
     args = get_args()
-    xmp.spawn(_mp_fn, args=(args,), nprocs=None)
+    xmp.spawn(_mp_fn, args=(args,))
 
 if __name__ == '__main__':
     main()
