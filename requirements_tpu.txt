@@ -1,4 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu126
+--find-links https://storage.googleapis.com/libtpu-releases/index.html
 conformer
 deepspeed
 diffusers
@@ -20,6 +20,7 @@ x-transformers
 torchcodec==0.9.1
 torch==2.9.0
 torchaudio==2.9.0
+torch_xla[tpu]
 torchvision
 torchdata
 torchinfo
@@ -30,3 +31,4 @@ wget
 modelscope
 peft
 onnxruntime
+datasets
