@@ -22,7 +22,11 @@ def apply_lora_to_llm(
         ],
     )
     
-    model.llm.model = get_peft_model(model.llm.model, lora_config)
+    new_peft_instance = get_peft_model(model.llm.model, lora_config)
+    print(f"type new_peft_instance: {type(new_peft_instance)}")
+    model.llm.model = new_peft_instance
+
+    print(f"type model.llm.model: {type(model.llm.model)}")
     model.llm.model.print_trainable_parameters()
 
     return model
