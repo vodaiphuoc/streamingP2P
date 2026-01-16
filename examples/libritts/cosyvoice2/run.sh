@@ -63,7 +63,7 @@ export OMP_NUM_THREADS=2
 num_gpus=$(echo $CUDA_VISIBLE_DEVICES | awk -F "," '{print NF}')
 job_id=1986
 dist_backend="nccl"
-num_workers=2
+num_workers=4
 prefetch=200
 train_engine=torch_ddp
 
