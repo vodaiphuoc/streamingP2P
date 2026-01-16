@@ -20,7 +20,7 @@ x-transformers
 torchcodec==0.9.1
 torch==2.9.0
 torchaudio==2.9.0
-torch_xla[tpu]
+torch_xla[tpu]==2.9.0
 torchvision
 torchdata
 torchinfo
