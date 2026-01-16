@@ -29,6 +29,8 @@ from cosyvoice.utils.common import th_accuracy
 from cosyvoice.utils.file_utils import logging
 from cosyvoice.utils.mask import make_pad_mask
 
+from peft import PeftModel
+
 
 class TransformerLM(torch.nn.Module):
     def __init__(
@@ -230,7 +232,7 @@ class TransformerLM(torch.nn.Module):
 class Qwen2Encoder(torch.nn.Module):
     def __init__(self, pretrain_path):
         super().__init__()
-        self.model = Qwen2ForCausalLM.from_pretrained(pretrain_path)
+        self.model: Qwen2ForCausalLM| PeftModel = Qwen2ForCausalLM.from_pretrained(pretrain_path)
 
     def forward(self, xs: torch.Tensor, xs_lens: torch.Tensor):
         T = xs.size(1)
@@ -257,6 +259,11 @@ class Qwen2Encoder(torch.nn.Module):
         new_cache = outs.past_key_values
         return xs, new_cache
 
+    def get_inner_embed_tokens(self):
+        if isinstance(self.model, PeftModel):
+            return self.model.base_model.model.embed_tokens
+        else:
+            return self.model.model.embed_tokens
 
 class Qwen2LM(TransformerLM):
     def __init__(
@@ -264,7 +271,7 @@ class Qwen2LM(TransformerLM):
             llm_input_size: int,
             llm_output_size: int,
             speech_token_size: int,
-            llm: torch.nn.Module,
+            llm: Qwen2Encoder,
             sampling: Callable,
             length_normalized_loss: bool = True,
             lsm_weight: float = 0.0,
@@ -281,7 +288,7 @@ class Qwen2LM(TransformerLM):
         self.fill_token = speech_token_size + 2
 
         self.llm_embedding = torch.nn.Embedding(2, llm_input_size)
-        self.llm = llm
+        self.llm: Qwen2Encoder = llm
         self.llm_decoder = nn.Linear(llm_output_size, speech_token_size + 3)
         self.criterion_ce = LabelSmoothingLoss(
             size=speech_token_size + 3,
@@ -368,7 +375,7 @@ class Qwen2LM(TransformerLM):
         speech_token_len = batch['speech_token_len'].to(device)
 
         # 1. encode text_token
-        text_token_emb = self.llm.model.model.embed_tokens(text_token)
+        text_token_emb = self.llm.get_inner_embed_tokens()(text_token)
 
         # 3. sos and task_id
         sos_emb = self.llm_embedding.weight[self.sos].reshape(1, 1, -1)
@@ -458,7 +465,8 @@ class Qwen2LM(TransformerLM):
         device = text.device
         text = torch.concat([prompt_text, text], dim=1)
         text_len += prompt_text_len
-        text = self.llm.model.model.embed_tokens(text)
+
+        text = self.llm.get_inner_embed_tokens()(text)
 
         # 3. concat llm_input
         sos_emb = self.llm_embedding.weight[self.sos].reshape(1, 1, -1)
