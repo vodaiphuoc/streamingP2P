@@ -1,6 +1,6 @@
---index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
 --find-links https://storage.googleapis.com/libtpu-releases/index.html
-conformer
+conformer==0.3.2
 deepspeed
 diffusers
 gdown==5.1.0

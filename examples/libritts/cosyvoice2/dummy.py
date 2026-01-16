@@ -6,7 +6,6 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 from copy import deepcopy
 import os
 import torch
-import torch.distributed as dist
 import torch_xla.core.xla_model as xm
 import torch_xla.distributed.xla_multiprocessing as xmp
 
@@ -34,9 +33,7 @@ def _mp_fn(index):
     print(f'this is map function at index {index}')
 
 def main():
-    
-    nprocs = 8
-    xmp.spawn(_mp_fn, nprocs=nprocs)
+    xmp.spawn(_mp_fn, nprocs=None)
 
 
 if __name__ == '__main__':

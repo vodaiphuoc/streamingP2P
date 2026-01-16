@@ -199,26 +199,7 @@ def _mp_fn(index, args):
 
 def main():
     args = get_args()
-    # Launch multi-processing
-    # Assuming 8 cores for TPU v3-8, or user can set PJRT_DEVICE=TPU and xmp will handle it.
-    # xmp.spawn will spawn nprocs processes.
-    # If using PJRT, nprocs might need to be set or it defaults to available devices.
-    # Let's try to detect or default to 8 (standard for single TPU host).
-    # Or better, let xmp handle it if possible, but xmp.spawn requires nprocs.
-    # If running on TPU VM, usually 8.
-    
-    # We can check if TPU is available.
-    # For now, let's assume 8 if not specified.
-    # But wait, if the user runs this on a single TPU chip (e.g. Colab), it might be 1.
-    # Safest is to let the user specify or default to 1? No, TPU training usually implies distributed.
-    # Let's use 8 as default for TPU VM.
-    
-    # Actually, we can check os.environ['TPU_NUM_DEVICES'] or similar.
-    # Or just use 8.
-    
-    nprocs = 8
-    xmp.spawn(_mp_fn, args=(args,), nprocs=nprocs)
-
+    xmp.spawn(_mp_fn, args=(args,), nprocs=None)
 
 if __name__ == '__main__':
     main()
