@@ -1,17 +1,3 @@
-# Copyright (c) 2024 Alibaba Inc (authors: Xiang Lyu, Zhihao Du)
-#               2025 Alibaba Inc (authors: Xiang Lyu, Yabin Li, Qihua, Shengqiang Li)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 import queue
 import random
 import time
@@ -29,8 +15,7 @@ from cosyvoice.utils.common import th_accuracy
 from cosyvoice.utils.file_utils import logging
 from cosyvoice.utils.mask import make_pad_mask
 
-from peft import PeftModel
-
+from peft import PeftModel, PeftModelForCausalLM
 
 class TransformerLM(torch.nn.Module):
     def __init__(
@@ -232,7 +217,7 @@ class TransformerLM(torch.nn.Module):
 class Qwen2Encoder(torch.nn.Module):
     def __init__(self, pretrain_path):
         super().__init__()
-        self.model: Qwen2ForCausalLM| PeftModel = Qwen2ForCausalLM.from_pretrained(pretrain_path)
+        self.model: Qwen2ForCausalLM | PeftModelForCausalLM = Qwen2ForCausalLM.from_pretrained(pretrain_path)
 
     def forward(self, xs: torch.Tensor, xs_lens: torch.Tensor):
         T = xs.size(1)
@@ -260,12 +245,9 @@ class Qwen2Encoder(torch.nn.Module):
         return xs, new_cache
 
     def get_inner_embed_tokens(self)->torch.nn.Embedding:
-        if isinstance(self.model, PeftModel):
-            print("self.model: ",type(self.model))
-            print("base_model: ",type(self.model.base_model))
-            print("model in base_model: ",type(self.model.base_model.model))
-            print("embed_token in model.model in base_model: ",type(self.model.base_model.model.model.embed_tokens))
-            return self.model.base_model.model.embed_tokens
+        if isinstance(self.model, PeftModelForCausalLM):
+            original_model:Qwen2ForCausalLM = self.model.base_model.model
+            return original_model.model.embed_tokens
         else:
             return self.model.model.embed_tokens
 
