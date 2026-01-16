@@ -31,4 +31,4 @@ wget
 modelscope
 peft
 onnxruntime
-datasets
+datasets>=2.20.0
