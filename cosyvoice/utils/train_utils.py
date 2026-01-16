@@ -25,6 +25,7 @@ import yaml
 import deepspeed
 import torch.optim as optim
 import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
@@ -32,9 +33,9 @@ from torch.nn.utils import clip_grad_norm_
 
 from deepspeed.runtime.zero.stage_1_and_2 import estimate_zero2_model_states_mem_needs_all_live
 
+from cosyvoice.llm.llm import Qwen2LM
 from cosyvoice.dataset.dataset import get_dataset
 from cosyvoice.utils.scheduler import WarmupLR, NoamHoldAnnealing, ConstantLR
-
 
 def init_distributed(args):
     world_size = int(os.environ.get('WORLD_SIZE', 1))
@@ -91,13 +92,13 @@ def check_modify_and_save_config(args, configs):
     return configs
 
 
-def wrap_cuda_model(args, model):
+def wrap_cuda_model(args, model: Qwen2LM)->DDP:
     local_world_size = int(os.environ.get('LOCAL_WORLD_SIZE', 1))
     world_size = int(os.environ.get('WORLD_SIZE', 1))
     if args.train_engine == "torch_ddp":  # native pytorch ddp
         assert (torch.cuda.is_available())
         model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=False)
+        model = DDP(model, find_unused_parameters=False)
     else:
         if int(os.environ.get('RANK', 0)) == 0:
             logging.info("Estimating model states memory needs (zero2)...")
@@ -108,12 +109,18 @@ def wrap_cuda_model(args, model):
     return model
 
 
-def init_optimizer_and_scheduler(args, configs, model, gan):
+def init_optimizer_and_scheduler(args, configs, model: DDP, gan):
     if gan is False:
         if configs['train_conf']['optim'] == 'adam':
-            optimizer = optim.Adam(model.parameters(), **configs['train_conf']['optim_conf'])
+            optimizer = optim.Adam(
+                filter(lambda p: p.requires_grad, model.parameters()),
+                **configs['train_conf']['optim_conf']
+            )
         elif configs['train_conf']['optim'] == 'adamw':
-            optimizer = optim.AdamW(model.parameters(), **configs['train_conf']['optim_conf'])
+            optimizer = optim.AdamW(
+                filter(lambda p: p.requires_grad, model.parameters()),
+                **configs['train_conf']['optim_conf']
+            )
         else:
             raise ValueError("unknown optimizer: " + configs['train_conf'])
 
@@ -192,14 +199,17 @@ def init_summarywriter(args):
     return writer
 
 
-def save_model(model, model_name, info_dict):
+def unwrap_ddp(model: DDP)->Qwen2LM:
+    return model.module
+
+def save_model(model: DDP, model_name, info_dict):
     rank = int(os.environ.get('RANK', 0))
     model_dir = info_dict["model_dir"]
     save_model_path = os.path.join(model_dir, '{}.pt'.format(model_name))
 
     if info_dict["train_engine"] == "torch_ddp":
         if rank == 0:
-            torch.save({**model.module.state_dict(), 'epoch': info_dict['epoch'], 'step': info_dict['step']}, save_model_path)
+            unwrap_ddp(model).save_for_inference(save_model_path)
     else:
         with torch.no_grad():
             model.save_checkpoint(save_dir=model_dir,

@@ -15,7 +15,7 @@ from cosyvoice.utils.common import th_accuracy
 from cosyvoice.utils.file_utils import logging
 from cosyvoice.utils.mask import make_pad_mask
 
-from peft import PeftModel, PeftModelForCausalLM
+from peft import PeftModelForCausalLM
 
 class TransformerLM(torch.nn.Module):
     def __init__(
@@ -217,7 +217,7 @@ class TransformerLM(torch.nn.Module):
 class Qwen2Encoder(torch.nn.Module):
     def __init__(self, pretrain_path):
         super().__init__()
-        self.model: Qwen2ForCausalLM | PeftModelForCausalLM = Qwen2ForCausalLM.from_pretrained(pretrain_path)
+        self._model: Qwen2ForCausalLM | PeftModelForCausalLM = Qwen2ForCausalLM.from_pretrained(pretrain_path)
 
     def forward(self, xs: torch.Tensor, xs_lens: torch.Tensor):
         T = xs.size(1)
@@ -244,12 +244,27 @@ class Qwen2Encoder(torch.nn.Module):
         new_cache = outs.past_key_values
         return xs, new_cache
 
+    @property
+    def model(self)->Qwen2ForCausalLM | PeftModelForCausalLM:
+        return self._model
+    
+    @model.setter
+    def model(self, new_instance: PeftModelForCausalLM):
+        assert isinstance(new_instance, PeftModelForCausalLM), \
+            f"assign new value to model must be type PeftModelForCausalLM, found {type(new_instance)}"
+        self._model = new_instance
+    
     def get_inner_embed_tokens(self)->torch.nn.Embedding:
+        r"""
+        Get embedd_tokens of Qwen2ForCausalLM model (the self._model)
+        """
         if isinstance(self.model, PeftModelForCausalLM):
             original_model:Qwen2ForCausalLM = self.model.base_model.model
             return original_model.model.embed_tokens
         else:
             return self.model.model.embed_tokens
+
+
 
 class Qwen2LM(TransformerLM):
     def __init__(
@@ -617,6 +632,18 @@ class Qwen2LM(TransformerLM):
             # in stream mode, yield token one by one
             yield top_ids
             lm_input = self.speech_embedding.weight[top_ids].reshape(1, 1, -1)
+
+    def save_for_inference(self, path: str)->None:
+        """
+        Save a merged, PEFT-free model for inference
+        """
+        peft_model = self.llm.model
+        peft_model = peft_model.merge_and_unload()
+        print(f"peft_model: {type(peft_model)}")
+        
+        self.llm.model = peft_model
+
+        torch.save(self.state_dict(), f"{path}/cosyvoice_merged.pt")
 
 
 class CosyVoice3LM(Qwen2LM):
