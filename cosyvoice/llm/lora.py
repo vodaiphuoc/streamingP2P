@@ -28,7 +28,8 @@ def apply_lora_to_llm(
     #         )
     #     model.prepare_inputs_for_generation = _prepare_inputs_for_generation
     
-    model.llm = get_peft_model(model.llm, lora_config)
-    model.llm.print_trainable_parameters()
+    print(type(model), type(model.llm), type(model.llm.model))
+    model.llm.model = get_peft_model(model.llm.model, lora_config)
+    model.llm.model.print_trainable_parameters()
 
     return model
