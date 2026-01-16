@@ -217,7 +217,7 @@ class TransformerLM(torch.nn.Module):
 class Qwen2Encoder(torch.nn.Module):
     def __init__(self, pretrain_path):
         super().__init__()
-        self._model: Qwen2ForCausalLM | PeftModelForCausalLM = Qwen2ForCausalLM.from_pretrained(pretrain_path)
+        self.model: Qwen2ForCausalLM | PeftModelForCausalLM = Qwen2ForCausalLM.from_pretrained(pretrain_path)
 
     def forward(self, xs: torch.Tensor, xs_lens: torch.Tensor):
         T = xs.size(1)
@@ -243,16 +243,6 @@ class Qwen2Encoder(torch.nn.Module):
         xs = outs.hidden_states[-1]
         new_cache = outs.past_key_values
         return xs, new_cache
-
-    @property
-    def model(self)->Qwen2ForCausalLM | PeftModelForCausalLM:
-        return self._model
-    
-    @model.setter
-    def model(self, new_instance: PeftModelForCausalLM):
-        assert isinstance(new_instance, PeftModelForCausalLM), \
-            f"assign new value to model must be type PeftModelForCausalLM, found {type(new_instance)}"
-        self._model = new_instance
     
     def get_inner_embed_tokens(self)->torch.nn.Embedding:
         r"""
@@ -263,7 +253,6 @@ class Qwen2Encoder(torch.nn.Module):
             return original_model.model.embed_tokens
         else:
             return self.model.model.embed_tokens
-
 
 
 class Qwen2LM(TransformerLM):
