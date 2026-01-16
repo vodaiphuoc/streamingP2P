@@ -628,8 +628,6 @@ class Qwen2LM(TransformerLM):
         """
         peft_model = self.llm.model
         peft_model = peft_model.merge_and_unload()
-        print(f"peft_model: {type(peft_model)}")
-        
         self.llm.model = peft_model
 
         torch.save(self.state_dict(), f"{path}/cosyvoice_merged.pt")
