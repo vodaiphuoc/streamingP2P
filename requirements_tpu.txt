@@ -32,3 +32,4 @@ modelscope
 peft
 onnxruntime
 datasets>=2.20.0
+tensorflow-cpu
