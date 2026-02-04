@@ -31,3 +31,4 @@ wget
 modelscope
 onnxruntime-gpu
 matplotlib
+matplotlib-inline
