@@ -7,28 +7,27 @@ from copy import deepcopy
 import os
 import torch
 import torch.distributed as dist
-import deepspeed
+import torch_xla.core.xla_model as xm
+import torch_xla.distributed.xla_multiprocessing as xmp
 
 from hyperpyyaml import load_hyperpyyaml
 
-from torch.distributed.elastic.multiprocessing.errors import record
-
 from cosyvoice.utils.losses import DPOLoss
-from cosyvoice.utils.executor import Executor
-from cosyvoice.utils.train_utils import (
+from cosyvoice.utils.tpu_executor import Executor
+from cosyvoice.utils.tpu_train_utils import (
     init_distributed,
     init_dataset_and_dataloader,
     init_optimizer_and_scheduler,
     init_summarywriter, save_model,
-    wrap_cuda_model, check_modify_and_save_config)
+    wrap_tpu_model, check_modify_and_save_config)
 
 from cosyvoice.llm.lora import apply_lora_to_llm
 
 def get_args():
     parser = argparse.ArgumentParser(description='training your network')
     parser.add_argument('--train_engine',
-                        default='deepspeed',
-                        choices=['torch_ddp', 'deepspeed'],
+                        default='torch_xla',
+                        choices=['torch_ddp', 'deepspeed', 'torch_xla'],
                         help='Engine for paralleled training')
     parser.add_argument('--model', required=True, help='model which will be trained')
     parser.add_argument('--ref_model', required=False, help='ref model used in dpo')
@@ -75,16 +74,17 @@ def get_args():
                         default=60,
                         type=int,
                         help='timeout (in seconds) of cosyvoice_join.')
-    parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
     return args
 
 
-@record
-def main():
-    args = get_args()
-    logging.basicConfig(level=logging.DEBUG,
+def _mp_fn(index, args):
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s')
+    
+    # Init env for ddp (XLA handles this mostly, but we can log info)
+    init_distributed(args)
+
     # gan train has some special initialization logic
     gan = True if args.model == 'hifigan' else False
 
@@ -101,9 +101,6 @@ def main():
         configs['train_conf'] = configs['train_conf_gan']
     configs['train_conf'].update(vars(args))
     
-    # Init env for ddp
-    init_distributed(args)
-
     # Get dataset & dataloader
     train_dataset, cv_dataset, train_data_loader, cv_data_loader = \
         init_dataset_and_dataloader(args, configs, gan, args.dpo)
@@ -147,8 +144,8 @@ def main():
         else:
             logging.warning('checkpoint {} do not exsist!'.format(args.checkpoint))
 
-    # Dispatch model from cpu to gpu
-    model = wrap_cuda_model(args, model)
+    # Dispatch model from cpu to tpu
+    model = wrap_tpu_model(args, model)
 
     # Get optimizer & scheduler
     model, optimizer, scheduler, optimizer_d, scheduler_d = init_optimizer_and_scheduler(args, configs, model, gan)
@@ -168,8 +165,7 @@ def main():
         state_dict = torch.load(args.ref_model, map_location='cpu')
         ref_model.load_state_dict(state_dict, strict=False)
         dpo_loss = DPOLoss(beta=0.01, label_smoothing=0.0, ipo=False)
-        # NOTE maybe it is not needed to wrap ref_model as ddp because its parameter is not updated
-        ref_model = wrap_cuda_model(args, ref_model)
+        ref_model = wrap_tpu_model(args, ref_model)
     else:
         ref_model, dpo_loss = None, None
 
@@ -178,27 +174,32 @@ def main():
     executor.step = start_step
 
     # Init scaler, used for pytorch amp mixed precision training
-    scaler = torch.amp.GradScaler("cuda") if args.use_amp else None
+    # XLA handles AMP differently, so we pass None or handle it inside executor
+    scaler = None 
 
-    print(f"start training for {args.model}")
+    if xm.is_master_ordinal():
+        print(f"start training for {args.model}")
 
     # Start training loop
     for epoch in range(start_epoch + 1, info_dict['max_epoch']):
         executor.epoch = epoch
         train_dataset.set_epoch(epoch)
-        dist.barrier()
-        group_join: dist.ProcessGroup = dist.new_group(
-            backend="gloo",
-            timeout=datetime.timedelta(seconds=args.timeout)
-        )
+        
+        # dist.barrier() # Not needed for XLA usually, or handled by xmp
+        
+        # Group join logic is for uneven workload, skipping for now
+        group_join = None 
         
         if gan is True:
             executor.train_one_epoc_gan(model, optimizer, scheduler, optimizer_d, scheduler_d, train_data_loader, cv_data_loader,
                                         writer, info_dict, scaler, group_join)
         else:
             executor.train_one_epoc(model, optimizer, scheduler, train_data_loader, cv_data_loader, writer, info_dict, scaler, group_join, ref_model=ref_model)
-        dist.destroy_process_group(group_join)
 
+
+def main():
+    args = get_args()
+    xmp.spawn(_mp_fn, args=(args,))
 
 if __name__ == '__main__':
     main()

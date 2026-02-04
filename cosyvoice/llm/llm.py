@@ -552,6 +552,7 @@ class Qwen2LM(TransformerLM):
         # NOTE init prompt_text as text_cache as it is basically impossible prompt_speech_token/prompt_text < 15/5
         text_cache = self.llm.model.model.embed_tokens(prompt_text)
         next_fill_index = (int(prompt_speech_token.shape[1] / self.mix_ratio[1]) + 1) * self.mix_ratio[1] - prompt_speech_token.shape[1]
+        
         for this_text in text:
             text_cache = torch.concat([text_cache, self.llm.model.model.embed_tokens(this_text)], dim=1)
             # prompt_speech_token_emb not empty, try append to lm_input

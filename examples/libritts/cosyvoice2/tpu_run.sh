@@ -57,24 +57,18 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
 fi
 
 # Stage 5: Training
-# (Update the 'cat' commands to point to your new folders)
-export CUDA_VISIBLE_DEVICES="0,1"
+export PJRT_DEVICE=TPU
 export OMP_NUM_THREADS=2
-num_gpus=$(echo $CUDA_VISIBLE_DEVICES | awk -F "," '{print NF}')
-job_id=1986
-dist_backend="nccl"
-num_workers=4
-prefetch=200
-train_engine=torch_ddp
+# num_workers=2
+prefetch=100
+train_engine=torch_xla
 
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   cp data/train/parquet/data.list data/train.data.list
   cp data/dev/parquet/data.list data/dev.data.list
   
   for model in llm flow hifigan; do
-    torchrun --nnodes=1 --nproc_per_node=$num_gpus \
-        --rdzv_id=$job_id --rdzv_backend="c10d" --rdzv_endpoint="localhost:1234" \
-      cosyvoice/bin/train.py \
+    python cosyvoice/bin/tpu_train.py \
       --train_engine $train_engine \
       --config ./conf/cosyvoice2.yaml \
       --train_data data/train.data.list \
@@ -84,13 +78,9 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
       --checkpoint $pretrained_model_dir/$model.pt \
       --model_dir `pwd`/exp/cosyvoice2/$model/$train_engine \
       --tensorboard_dir `pwd`/tensorboard/cosyvoice2/$model/$train_engine \
-      --ddp.dist_backend $dist_backend \
-      --num_workers ${num_workers} \
       --prefetch ${prefetch} \
       --pin_memory \
-      --use_amp \
-      --deepspeed_config ./conf/ds_stage2.json \
-      --deepspeed.save_states model+optimizer
+      --use_amp
   done
 fi
 
@@ -102,7 +92,7 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
     python cosyvoice/bin/average_model.py \
       --dst_model $decode_checkpoint \
       --src_path `pwd`/exp/cosyvoice/$model/$train_engine  \
-      --num ${num_gpus} \
+      --num 5 \
       --val_best
   done
 fi
