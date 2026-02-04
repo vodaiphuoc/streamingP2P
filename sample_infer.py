@@ -11,7 +11,7 @@ from cosyvoice.cli.model import CosyVoice2Model
 
 tts_text = '收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。'
 instruct_text = '用四川话说这句话<|endofprompt|>'
-prompt_wav = 'asset/zero_shot_prompt.wav'
+prompt_wav = f'{ROOT_DIR}/asset/zero_shot_prompt.wav'
 
 cosyvoice_wrapper = AutoModel(model_dir="FunAudioLLM/CosyVoice2-0.5B")
 

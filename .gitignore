@@ -43,6 +43,7 @@ compile_commands.json
 
 # train/inference files
 *.wav
+!asset/zero_shot_prompt.wav
 *.m4a
 *.aac
 *.pt
